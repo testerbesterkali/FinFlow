@@ -1,11 +1,13 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { createChart, ColorType, IChartApi } from 'lightweight-charts'
+import { supabase } from '../lib/supabase'
 import {
     ChevronLeft,
     Activity,
     TrendingUp,
     Zap,
-    Info
+    Info,
+    Loader2
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 
@@ -17,6 +19,35 @@ interface AssetDeepDiveProps {
 export default function AssetDeepDive({ symbol = 'AAPL', onBack }: AssetDeepDiveProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null)
     const chartRef = useRef<IChartApi | null>(null)
+    const [loading, setLoading] = useState(false)
+    const [thesis, setThesis] = useState({
+        text: 'Institutional liquidity nodes are congregating at potential pivot zones. Awaiting deeper audit...',
+        confidence: 88,
+        prob: 'High'
+    })
+
+    const generateAudit = async () => {
+        setLoading(true)
+        try {
+            const { data, error } = await supabase.functions.invoke('ai-orchestrator', {
+                body: {
+                    prompt: `Deep audit for ${symbol}. Focus on FICC standards.`,
+                    assetClass: 'equity'
+                }
+            })
+            if (data) {
+                setThesis({
+                    text: data.thesis,
+                    confidence: data.confidence,
+                    prob: data.regime || 'Extreme'
+                })
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
 
     useEffect(() => {
         if (!chartContainerRef.current) return
@@ -130,25 +161,38 @@ export default function AssetDeepDive({ symbol = 'AAPL', onBack }: AssetDeepDive
                         </div>
 
                         <div className="space-y-6 relative z-10">
-                            <p className="text-base text-slate-300 font-medium leading-relaxed italic border-l-4 border-blue-500/30 pl-6 py-2">
-                                "Institutional liquidity nodes are congregating at $184.20. Order flow imbalance indicates a high-probability breakout."
-                            </p>
+                            {loading ? (
+                                <div className="py-12 flex flex-col items-center justify-center gap-4">
+                                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+                                    <span className="text-xs font-black text-slate-500 uppercase tracking-widest">Orchestrating Audit...</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <p className="text-base text-slate-300 font-medium leading-relaxed italic border-l-4 border-blue-500/30 pl-6 py-2">
+                                        "{thesis.text}"
+                                    </p>
 
-                            <div className="grid grid-cols-1 gap-6 bg-white/5 p-8 rounded-2xl border border-white/5">
-                                <div className="flex items-center justify-between">
-                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Confidence</div>
-                                    <div className="text-4xl font-black">94<span className="text-base text-blue-400 ml-0.5">%</span></div>
-                                </div>
-                                <div className="h-[1px] bg-white/5" />
-                                <div className="flex items-center justify-between">
-                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Prob</div>
-                                    <div className="text-3xl font-black text-emerald-400 tracking-tighter uppercase">Extreme</div>
-                                </div>
-                            </div>
+                                    <div className="grid grid-cols-1 gap-6 bg-white/5 p-8 rounded-2xl border border-white/5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Confidence</div>
+                                            <div className="text-4xl font-black">{thesis.confidence}<span className="text-base text-blue-400 ml-0.5">%</span></div>
+                                        </div>
+                                        <div className="h-[1px] bg-white/5" />
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Prob</div>
+                                            <div className="text-3xl font-black text-emerald-400 tracking-tighter uppercase">{thesis.prob}</div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
 
-                        <button className="w-full py-5 bg-white text-black font-black text-base rounded-2xl hover:bg-slate-100 transition-all shadow-xl active:scale-95 relative z-10">
-                            Generate Audit
+                        <button
+                            onClick={generateAudit}
+                            disabled={loading}
+                            className="w-full py-5 bg-white text-black font-black text-base rounded-2xl hover:bg-slate-100 transition-all shadow-xl active:scale-95 relative z-10 disabled:opacity-50"
+                        >
+                            {loading ? "Processing..." : "Generate Audit"}
                         </button>
                     </div>
 

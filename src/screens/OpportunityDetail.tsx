@@ -12,17 +12,23 @@ import {
 } from 'lucide-react'
 
 export default function OpportunityDetail({ opportunity, onBack }: { opportunity?: any, onBack?: () => void }) {
-    const data = opportunity || {
-        symbol: 'SMCI',
-        category: 'BREAKOUT',
-        confidence: 89,
-        thesis: 'Super Micro Computer Inc. is forming a structurally perfect high-handle breakout. AI server demand persists with strong forward guidance and institutional buy-side support.',
-        conviction: {
+    // Map DB fields to UI-friendly structure
+    const data = {
+        symbol: opportunity?.symbol || 'SMCI',
+        category: opportunity?.asset_class || 'BREAKOUT',
+        confidence: opportunity?.confidence || 89,
+        thesis: opportunity?.thesis || 'Super Micro Computer Inc. is forming a structurally perfect high-handle breakout. AI server demand persists with strong forward guidance.',
+        conviction: opportunity?.conviction || {
             technical: 30,
             fundamental: 25,
             sentiment: 20,
             macro: 14
-        }
+        },
+        key_levels: opportunity?.key_levels || [
+            'Confirmed daily close above $980',
+            'Volume expansion >1.5x',
+            'Stop loss authenticated at $925'
+        ]
     }
 
     return (
@@ -39,10 +45,14 @@ export default function OpportunityDetail({ opportunity, onBack }: { opportunity
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-end">
                 <div className="lg:col-span-7 space-y-8">
                     <div className="flex items-center gap-4">
-                        <div className="px-4 py-1.5 bg-black text-white text-[10px] font-black rounded-lg tracking-widest uppercase shadow-md">High Conviction</div>
-                        <span className="text-blue-600 font-bold tracking-[0.25em] text-[10px] uppercase flex items-center gap-2"><Compass size={16} /> Intelligence Alpha</span>
+                        <div className="px-4 py-1.5 bg-black text-white text-[10px] font-black rounded-lg tracking-widest uppercase shadow-md">
+                            {data.confidence > 85 ? 'Extreme' : 'High'} Conviction
+                        </div>
+                        <span className="text-blue-600 font-bold tracking-[0.25em] text-[10px] uppercase flex items-center gap-2">
+                            <Compass size={16} /> {opportunity ? 'Signal Authenticated' : 'Intelligence Alpha'}
+                        </span>
                     </div>
-                    <h1 className="text-huge font-black text-black tracking-tighter leading-none mb-4">{data.symbol}</h1>
+                    <h1 className="text-6xl lg:text-7xl font-black text-black tracking-tighter leading-none mb-4">{data.symbol}</h1>
                     <p className="text-xl text-slate-500 leading-relaxed font-bold tracking-tight border-l-8 border-slate-200 pl-8 max-w-2xl">
                         {data.thesis}
                     </p>
@@ -52,7 +62,7 @@ export default function OpportunityDetail({ opportunity, onBack }: { opportunity
                     <div className="absolute inset-0 bg-blue-500/10 blur-[100px]" />
                     <div className="text-[10px] uppercase font-black text-slate-500 mb-6 tracking-[0.3em] relative z-10">Signal Confidence</div>
                     <div className="text-[100px] font-black leading-none tracking-tighter mb-2 relative z-10">{data.confidence}<span className="text-blue-500 text-3xl ml-1">%</span></div>
-                    <div className="px-5 py-2 bg-white/10 rounded-xl text-[10px] font-black border border-white/10 tracking-[0.2em] uppercase relative z-10 shadow-inner">Authenticated</div>
+                    <div className="px-5 py-2 bg-white/10 rounded-xl text-[10px] font-black border border-white/10 tracking-[0.2em] uppercase relative z-10 shadow-inner">Institutional Tier</div>
                 </div>
             </section>
 
@@ -90,11 +100,11 @@ export default function OpportunityDetail({ opportunity, onBack }: { opportunity
                 <div className="lg:col-span-4 space-y-10">
                     {/* Risk Card */}
                     <div className="premium-card bg-rose-50 border border-rose-100 p-8 space-y-8 shadow-sm">
-                        <h4 className="font-black flex items-center gap-3 text-rose-950 text-xl tracking-tight"><ShieldCheck size={24} className="text-rose-500" /> Anchors</h4>
+                        <h4 className="font-black flex items-center gap-3 text-rose-950 text-xl tracking-tight"><ShieldCheck size={24} className="text-rose-500" /> Signal Anchors</h4>
                         <ul className="space-y-6">
-                            <CheckItem label="Confirmed daily close above $980" />
-                            <CheckItem label="Volume expansion >1.5x" />
-                            <CheckItem label="Stop loss authenticated at $925" />
+                            {(data.key_levels as string[]).map((level, idx) => (
+                                <CheckItem key={idx} label={level} />
+                            ))}
                         </ul>
                     </div>
 

@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import { cn } from '../lib/utils'
 import {
     Plus,
@@ -7,7 +8,9 @@ import {
     Search,
     Settings,
     Play,
-    Maximize2
+    Maximize2,
+    Loader2,
+    CheckCircle2
 } from 'lucide-react'
 
 const nodeTypes = {
@@ -18,11 +21,39 @@ const nodeTypes = {
 }
 
 export default function AgentBuilder() {
-    const [nodes] = useState([
+    const [nodes, setNodes] = useState<any[]>([
         { id: 1, type: 'TRIGGER' as const, label: 'Price crosses $190', value: 'price_cross' },
         { id: 2, type: 'ANALYSIS' as const, label: 'Run AI Breakout Analysis', value: 'ai_breakout' },
         { id: 4, type: 'ACTION' as const, label: 'Send Telegram Alert', value: 'telegram_notify' }
     ])
+    const [saving, setSaving] = useState(false)
+    const [deployed, setDeployed] = useState(false)
+
+    const deployAgent = async () => {
+        setSaving(true)
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return
+
+            const { error } = await supabase
+                .from('agents')
+                .insert([{
+                    user_id: user.id,
+                    name: 'Institutional Whale Watcher',
+                    configuration: { nodes },
+                    status: 'active'
+                }])
+
+            if (!error) {
+                setDeployed(true)
+                setTimeout(() => setDeployed(false), 3000)
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setSaving(false)
+        }
+    }
 
     return (
         <div className="flex flex-col gap-10 page-transition">
@@ -33,7 +64,17 @@ export default function AgentBuilder() {
                 </div>
                 <div className="flex gap-4 shrink-0">
                     <button className="px-8 py-4 bg-white text-slate-700 font-black text-sm rounded-2xl hover:bg-slate-50 transition-all border border-slate-200 shadow-sm active:scale-95">Simulation</button>
-                    <button className="px-10 py-4 bg-black text-white font-black text-sm rounded-2xl hover:shadow-xl transition-all shadow-lg active:scale-95">Deploy Agent</button>
+                    <button
+                        onClick={deployAgent}
+                        disabled={saving}
+                        className={cn(
+                            "px-10 py-4 font-black text-sm rounded-2xl transition-all shadow-lg active:scale-95 flex items-center gap-2",
+                            deployed ? "bg-emerald-500 text-white" : "bg-black text-white hover:shadow-xl"
+                        )}
+                    >
+                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> :
+                            deployed ? <><CheckCircle2 size={18} /> Deployed</> : "Deploy Agent"}
+                    </button>
                 </div>
             </div>
 
@@ -42,7 +83,7 @@ export default function AgentBuilder() {
                 <main className="flex-1 relative bg-white/40 rounded-[2.5rem] border border-white/60 p-12 overflow-y-auto scrollbar-none shadow-inner min-h-[600px]">
                     <div className="max-w-xl mx-auto space-y-8">
                         {nodes.map((node, index) => {
-                            const type = nodeTypes[node.type]
+                            const type = nodeTypes[node.type as keyof typeof nodeTypes]
                             const Icon = type.icon
                             return (
                                 <React.Fragment key={node.id}>

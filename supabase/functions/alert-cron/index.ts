@@ -26,7 +26,7 @@ async function generateAIAlert(agent: any, symbolData: any) {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            prompt: `Analyze ${symbolData.symbol} for a potential breakout. Current price: ${symbolData.price}, Change: ${symbolData.changePercent}%`,
+            prompt: `Analyze ${symbolData.symbol} for a potential breakout or trend change. Current price: ${symbolData.price}, Source: ${symbolData.source}`,
             context: { agent_config: agent.configuration, market_data: symbolData },
             assetClass: symbolData.assetClass
         })
@@ -35,13 +35,17 @@ async function generateAIAlert(agent: any, symbolData: any) {
 }
 
 async function sendTelegramAlert(telegramId: string, alert: any) {
-    // Simple Telegram Bot API call
     const message = `
-🚨 [ALERT] ${alert.symbol} $${alert.price} (${alert.changePercent}%)
+🚨 *[SIGNAL]* ${alert.symbol} @ $${alert.price}
+📊 Confidence: ${alert.confidence}%
+    
+*Thesis:*
+${alert.thesis}
 
-${alert.analysis}
+*Key Levels:*
+${alert.key_levels.map((l: string) => `• ${l}`).join('\n')}
 
-[View Dashboard](${Deno.env.get("FRONTEND_URL")})
+[View Deep Dive](${Deno.env.get("FRONTEND_URL")})
   `;
 
     await fetch(`https://api.telegram.org/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/sendMessage`, {
@@ -55,9 +59,8 @@ ${alert.analysis}
     });
 }
 
-serve(async (req) => {
+serve(async (req: Request) => {
     try {
-        // 1. Get all active agents
         const { data: agents, error: agentsError } = await supabase
             .from("agents")
             .select("*, profiles(telegram_id)")
@@ -65,60 +68,66 @@ serve(async (req) => {
 
         if (agentsError) throw agentsError;
 
-        for (const agent of agents) {
-            const { symbols } = agent.configuration; // Assuming config has a symbols list
+        for (const agent of agents || []) {
+            const symbols = agent.configuration?.symbols || [{ symbol: 'BTC', assetClass: 'crypto' }];
             for (const symbolObj of symbols) {
-                const symbolData = await fetchLatestPrice(symbolObj.symbol, symbolObj.assetClass);
+                try {
+                    const symbolData = await fetchLatestPrice(symbolObj.symbol, symbolObj.assetClass);
 
-                // 2. Simple signal detection (e.g., price move > 2%)
-                // In production, this would be more complex logic stored in DB or code
-                if (Math.abs(symbolData.changePercent) >= 2) {
-
-                    // 3. Check if we already sent an alert recently (deduplication)
+                    // Signal Detection: Frequency capping
                     const { data: recentAlerts } = await supabase
                         .from("alerts")
                         .select("id")
                         .eq("agent_id", agent.id)
                         .eq("symbol", symbolData.symbol)
-                        .gt("created_at", new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()); // 4 hours window
+                        .gt("created_at", new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString());
 
                     if (recentAlerts && recentAlerts.length > 0) continue;
 
-                    // 4. Generate AI Analysis
+                    // AI Pipeline
                     const aiResult = await generateAIAlert(agent, symbolData);
 
-                    // 5. Store alert
-                    const { data: newAlert, error: insertError } = await supabase
-                        .from("alerts")
-                        .insert({
-                            agent_id: agent.id,
-                            symbol: symbolData.symbol,
-                            price: symbolData.price,
-                            change_percent: symbolData.changePercent,
-                            confidence: 85, // Placeholder for AI confidence
-                            thesis: aiResult.analysis,
-                            is_delivered: true,
-                            delivered_at: new Date().toISOString()
-                        })
-                        .select()
-                        .single();
+                    // Validation: Only post if high confidence
+                    if (aiResult && aiResult.confidence >= 70) {
+                        const { error: insertError } = await supabase
+                            .from("alerts")
+                            .insert({
+                                agent_id: agent.id,
+                                symbol: aiResult.symbol,
+                                asset_class: aiResult.asset_class,
+                                price: symbolData.price,
+                                change_percent: symbolData.changePercent || 0,
+                                confidence: aiResult.confidence,
+                                thesis: aiResult.thesis,
+                                conviction: aiResult.conviction,
+                                key_levels: aiResult.key_levels,
+                                outcome_status: 'watched',
+                                is_delivered: !!agent.profiles?.telegram_id,
+                                delivered_at: new Date().toISOString()
+                            });
 
-                    if (insertError) throw insertError;
+                        if (insertError) throw insertError;
 
-                    // 6. Dispatch to Telegram
-                    await sendTelegramAlert(agent.profiles.telegram_id, {
-                        symbol: symbolData.symbol,
-                        price: symbolData.price,
-                        changePercent: symbolData.changePercent,
-                        analysis: aiResult.analysis
-                    });
+                        if (agent.profiles?.telegram_id) {
+                            await sendTelegramAlert(agent.profiles.telegram_id, {
+                                ...aiResult,
+                                price: symbolData.price
+                            });
+                        }
+                    }
+                } catch (err: any) {
+                    console.error(`Error processing ${symbolObj.symbol}:`, err.message);
                 }
             }
         }
 
-        return new Response(JSON.stringify({ status: "Alert processing complete" }));
-    } catch (err) {
-        console.error(err);
-        return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+        return new Response(JSON.stringify({ status: "Success" }), {
+            headers: { "Content-Type": "application/json" }
+        });
+    } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), {
+            status: 500,
+            headers: { "Content-Type": "application/json" }
+        });
     }
 });

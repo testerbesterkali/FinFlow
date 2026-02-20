@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
+import { supabase } from '../lib/supabase'
 import {
     TrendingUp,
     TrendingDown,
@@ -6,35 +7,89 @@ import {
     Target,
     Zap,
     Shield,
-    History as HistoryIcon
+    History as HistoryIcon,
+    Loader2
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface DashboardProps {
     onOpenAsset: (id: string) => void
-    onOpenOpportunity: (id: string) => void
+    onOpenOpportunity: (id: string | any) => void
     onOpenHistory: () => void
 }
 
 export default function Dashboard({ onOpenAsset, onOpenOpportunity, onOpenHistory }: DashboardProps) {
+    const [opportunities, setOpportunities] = useState<any[]>([])
+    const [watchlist, setWatchlist] = useState<any[]>([])
+    const [loading, setLoading] = useState(true)
+
     const stats = [
         { label: 'Network Power', value: '4.8kW', change: '+12%', icon: Zap, color: 'text-amber-500' },
         { label: 'Active Agents', value: '18', change: 'Stable', icon: Shield, color: 'text-emerald-500' },
         { label: 'Signal Accuracy', value: '94.2%', change: '+2.4%', icon: Target, color: 'text-blue-500' },
     ]
 
-    const opportunities = [
-        { id: '1', asset: 'NVDA', type: 'Long', conviction: 'High', entry: '$724.12', potential: '+14.5%', trend: 'bull' },
-        { id: '2', asset: 'BTC', type: 'Short', conviction: 'Medium', entry: '$52,140', potential: '-4.2%', trend: 'bear' },
-        { id: '3', asset: 'ETH', type: 'Long', conviction: 'Extreme', entry: '$2,840.15', potential: '+8.9%', trend: 'bull' },
-    ]
+    useEffect(() => {
+        fetchData()
 
-    const watchlist = [
-        { symbol: 'AAPL', price: '$182.31', change: '+1.2%', trend: 'bull' },
-        { symbol: 'TSLA', price: '$193.57', change: '-2.4%', trend: 'bear' },
-        { symbol: 'MSFT', price: '$404.06', change: '+0.8%', trend: 'bull' },
-        { symbol: 'SOL', price: '$112.45', change: '+5.7%', trend: 'bull' },
-    ]
+        // Real-time subscription for alerts
+        const channel = supabase
+            .channel('schema-db-changes')
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'alerts'
+                },
+                () => fetchData()
+            )
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
+
+    const fetchData = async () => {
+        try {
+            // Fetch latest alerts as opportunities
+            const { data: alertsData } = await supabase
+                .from('alerts')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(5)
+
+            if (alertsData && alertsData.length > 0) {
+                setOpportunities(alertsData)
+            } else {
+                // Fallback to mock data if DB is empty
+                setOpportunities([
+                    { id: '1', symbol: 'NVDA', type: 'Long', confidence: 92, price: 724.12, thesis: 'Accumulation detected by institutional tier-1 liquidity nodes.', outcome_status: 'ignored' },
+                    { id: '2', symbol: 'BTC', type: 'Short', confidence: 78, price: 52140, thesis: 'Resistance rejection at local supply zone. Bearish divergence.', outcome_status: 'ignored' },
+                ])
+            }
+
+            // Fetch watchlist (mocked for now until user watchlist logic is fully defined)
+            setWatchlist([
+                { symbol: 'AAPL', price: '$182.31', change: '+1.2%', trend: 'bull' },
+                { symbol: 'TSLA', price: '$193.57', change: '-2.4%', trend: 'bear' },
+                { symbol: 'MSFT', price: '$404.06', change: '+0.8%', trend: 'bull' },
+            ])
+        } catch (err) {
+            console.error('Error fetching data:', err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (loading) {
+        return (
+            <div className="flex-1 flex items-center justify-center min-h-[400px]">
+                <Loader2 className="w-12 h-12 text-blue-500 animate-spin opacity-20" />
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col gap-8 page-transition">
@@ -86,14 +141,14 @@ export default function Dashboard({ onOpenAsset, onOpenOpportunity, onOpenHistor
                         {opportunities.map((opp) => (
                             <div
                                 key={opp.id}
-                                onClick={() => onOpenOpportunity(opp.id)}
+                                onClick={() => onOpenOpportunity(opp)}
                                 className="premium-card p-6 group cursor-pointer hover:shadow-xl transition-all duration-500 border-l-8 border-l-slate-200 hover:border-l-blue-500"
                             >
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-6">
                                         <div className="flex flex-col">
-                                            <span className="text-2xl font-black text-slate-900 tracking-tighter">{opp.asset}</span>
-                                            <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">{opp.type} Potential</span>
+                                            <span className="text-2xl font-black text-slate-900 tracking-tighter">{opp.symbol}</span>
+                                            <span className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">{opp.type || 'Breakout'} Potential</span>
                                         </div>
 
                                         <div className="h-8 w-[1px] bg-slate-200" />
@@ -103,18 +158,18 @@ export default function Dashboard({ onOpenAsset, onOpenOpportunity, onOpenHistor
                                             <div className="flex items-center gap-1.5">
                                                 <div className="flex gap-1">
                                                     {[1, 2, 3].map(i => (
-                                                        <div key={i} className={cn("w-2 h-2 rounded-full", i <= (opp.conviction === 'Extreme' ? 3 : 2) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-200")} />
+                                                        <div key={i} className={cn("w-2 h-2 rounded-full", i <= (opp.confidence > 85 ? 3 : 2) ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-slate-200")} />
                                                     ))}
                                                 </div>
-                                                <span className="text-[11px] font-black text-slate-700">{opp.conviction}</span>
+                                                <span className="text-[11px] font-black text-slate-700">{opp.confidence > 85 ? 'Extreme' : 'High'}</span>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center gap-8">
                                         <div className="text-right">
-                                            <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest mb-0.5">Potential</p>
-                                            <p className="text-xl font-black text-emerald-600 tracking-tighter">{opp.potential}</p>
+                                            <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest mb-0.5">Entry Target</p>
+                                            <p className="text-xl font-black text-emerald-600 tracking-tighter">${opp.price}</p>
                                         </div>
                                         <div className="p-2.5 rounded-xl bg-slate-900 text-white group-hover:bg-blue-600 transition-colors shadow-lg">
                                             <ChevronRight size={18} />

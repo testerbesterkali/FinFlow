@@ -1,68 +1,89 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const YAHOO_FINANCE_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/";
+const TWELVE_DATA_API_KEY = Deno.env.get("TWELVE_DATA_API_KEY");
 const BINANCE_API_URL = "https://api.binance.com/api/v3/ticker/price";
+const YAHOO_FINANCE_BASE_URL = "https://query1.finance.yahoo.com/v8/finance/chart/";
 
-async function fetchYahooPrice(symbol: string) {
-    try {
-        const response = await fetch(`${YAHOO_FINANCE_BASE_URL}${symbol}?interval=1m&range=1d`);
-        const data = await response.json();
-        const result = data.chart.result[0];
-        const quote = result.indicators.quote[0];
-        const close = quote.close[quote.close.length - 1];
-        const prevClose = result.meta.previousClose;
-        const change = ((close - prevClose) / prevClose) * 100;
+async function fetchTwelveDataPrice(symbol: string) {
+    if (!TWELVE_DATA_API_KEY) throw new Error("TWELVE_DATA_API_KEY not set");
 
-        return {
-            symbol,
-            price: close,
-            changePercent: change,
-            timestamp: new Date().toISOString(),
-            source: "Yahoo Finance"
-        };
-    } catch (err) {
-        console.error(`Error fetching Yahoo price for ${symbol}:`, err);
-        throw err;
-    }
+    // Twelve Data can handle most symbols (AAPL, BTC/USD, EUR/USD)
+    const response = await fetch(`https://api.twelvedata.com/quote?symbol=${symbol}&apikey=${TWELVE_DATA_API_KEY}`);
+    const data = await response.json();
+
+    if (data.status === "error") throw new Error(data.message);
+
+    return {
+        symbol: data.symbol,
+        price: parseFloat(data.close),
+        changePercent: parseFloat(data.percent_change),
+        timestamp: new Date().toISOString(),
+        source: "Twelve Data"
+    };
 }
 
 async function fetchBinancePrice(symbol: string) {
-    try {
-        // Binance symbols are like BTCUSDT
-        const binanceSymbol = symbol.endsWith("USDT") ? symbol : `${symbol}USDT`;
-        const response = await fetch(`${BINANCE_API_URL}?symbol=${binanceSymbol}`);
-        const data = await response.json();
+    const binanceSymbol = symbol.endsWith("USDT") ? symbol : `${symbol}USDT`;
+    const response = await fetch(`${BINANCE_API_URL}?symbol=${binanceSymbol}`);
+    const data = await response.json();
 
-        return {
-            symbol,
-            price: parseFloat(data.price),
-            changePercent: null, // Binance ticker/price doesn't give 24h change, would need ticker/24hr
-            timestamp: new Date().toISOString(),
-            source: "Binance"
-        };
-    } catch (err) {
-        console.error(`Error fetching Binance price for ${symbol}:`, err);
-        throw err;
-    }
+    return {
+        symbol,
+        price: parseFloat(data.price),
+        changePercent: null,
+        timestamp: new Date().toISOString(),
+        source: "Binance"
+    };
 }
 
-serve(async (req) => {
-    const { symbol, assetClass } = await req.json();
+// Fallback legacy method
+async function fetchYahooPrice(symbol: string) {
+    const response = await fetch(`${YAHOO_FINANCE_BASE_URL}${symbol}?interval=1m&range=1d`);
+    const data = await response.json();
+    const result = data.chart.result[0];
+    const quote = result.indicators.quote[0];
+    const close = quote.close[quote.close.length - 1];
+    const prevClose = result.meta.previousClose;
+    const change = ((close - prevClose) / prevClose) * 100;
 
+    return {
+        symbol,
+        price: close,
+        changePercent: change,
+        timestamp: new Date().toISOString(),
+        source: "Yahoo Finance (Legacy)"
+    };
+}
+
+serve(async (req: Request) => {
     try {
+        const { symbol, assetClass } = await req.json();
+
         let data;
-        if (assetClass === "crypto") {
-            data = await fetchBinancePrice(symbol);
-        } else {
-            // Stocks, FX (e.g. EURUSD=X), Commodities (e.g. CL=F)
-            data = await fetchYahooPrice(symbol);
+
+        // 1. Try Twelve Data (Primary)
+        if (TWELVE_DATA_API_KEY) {
+            try {
+                data = await fetchTwelveDataPrice(symbol);
+            } catch (err) {
+                console.warn(`Twelve Data failed for ${symbol}, falling back...`, err.message);
+            }
+        }
+
+        // 2. Fallbacks
+        if (!data) {
+            if (assetClass === "crypto") {
+                data = await fetchBinancePrice(symbol);
+            } else {
+                data = await fetchYahooPrice(symbol);
+            }
         }
 
         return new Response(JSON.stringify(data), {
             headers: { "Content-Type": "application/json" }
         });
-    } catch (err) {
-        return new Response(JSON.stringify({ error: "Failed to fetch market data", details: err.message }), {
+    } catch (err: any) {
+        return new Response(JSON.stringify({ error: err.message }), {
             status: 500,
             headers: { "Content-Type": "application/json" }
         });
