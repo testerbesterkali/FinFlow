@@ -6,7 +6,6 @@ import {
     Layers,
     Mail,
     PieChart,
-    Users as UsersIcon,
     Layout as AgentIcon,
     Settings,
     Bell,
@@ -34,11 +33,11 @@ interface MainLayoutProps {
 export default function MainLayout({ children, activeView, onViewChange }: MainLayoutProps) {
     return (
         <div className="flex h-screen w-screen overflow-hidden bg-[#E3E9F0]">
-            {/* Sidebar (Black, Minimal) */}
-            <aside className="w-[120px] bg-black flex flex-col items-center py-12 gap-10 shrink-0">
-                <div className="text-white font-black text-2xl mb-8 italic tracking-tighter">df</div>
+            {/* Sidebar (Deep Navy/Black, Sharper) */}
+            <aside className="w-[100px] bg-[#0A0D12] flex flex-col items-center py-10 gap-8 shrink-0 border-r border-white/5">
+                <div className="text-white font-black text-xl mb-6 italic tracking-tighter hover:scale-110 transition-transform cursor-pointer">ff.</div>
 
-                <div className="flex-1 flex flex-col gap-6">
+                <div className="flex-1 flex flex-col gap-5">
                     {sidebarItems.map((item) => {
                         const Icon = item.icon
                         const isActive = activeView === item.id || (activeView === 'deepdive' && item.id === 'dashboard')
@@ -47,54 +46,55 @@ export default function MainLayout({ children, activeView, onViewChange }: MainL
                                 key={item.id}
                                 onClick={() => onViewChange(item.id)}
                                 className={cn(
-                                    "sidebar-icon group relative w-14 h-14",
+                                    "sidebar-icon group relative w-12 h-12",
                                     isActive && "sidebar-icon-active"
                                 )}
                             >
-                                <Icon size={24} />
-                                <span className="absolute left-full ml-6 px-3 py-1.5 bg-black text-white text-[11px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-2xl">
+                                <Icon size={20} />
+                                <span className="absolute left-full ml-4 px-3 py-1.5 bg-[#1A1F26] text-white text-[10px] font-bold rounded-lg opacity-0 group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap shadow-xl border border-white/5">
                                     {item.label}
                                 </span>
                                 {isActive && (
-                                    <div className="absolute -left-2 w-1.5 h-8 bg-white rounded-r-full shadow-[0_0_15px_white]" />
+                                    <div className="absolute -left-3 w-1 h-6 bg-blue-500 rounded-r-full shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
                                 )}
                             </div>
                         )
                     })}
                 </div>
 
-                <div className="sidebar-icon w-14 h-14 mt-auto">
-                    <Settings size={24} />
+                <div className="sidebar-icon w-12 h-12 mt-auto">
+                    <Settings size={20} />
                 </div>
             </aside>
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
                 {/* Top bar (Consistent Header) */}
-                <header className="px-12 py-8 flex items-center justify-between bg-transparent flex-shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10B981]" />
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Institutional System Live</span>
+                <header className="px-10 py-6 flex items-center justify-between bg-white/30 backdrop-blur-md border-bottom border-white/20 flex-shrink-0 z-40">
+                    <div className="flex items-center gap-3">
+                        <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_5px_#10B981]" />
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.25em]">Live Institutional Feed</span>
                     </div>
 
-                    <div className="flex items-center gap-8">
-                        <div className="flex items-center gap-4">
-                            <button className="p-3 hover:bg-white/80 rounded-2xl transition-all border border-transparent hover:border-white/40"><MessageCircle size={22} className="text-slate-500" /></button>
-                            <button onClick={() => onViewChange('history')} className="p-3 hover:bg-white/80 rounded-2xl transition-all relative border border-transparent hover:border-white/40">
-                                <Bell size={22} className="text-slate-500" />
-                                <div className="absolute top-3 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full border-2 border-[#E3E9F0]" />
+                    <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-3">
+                            <button className="p-2.5 hover:bg-white/80 rounded-xl transition-all border border-transparent hover:border-white/40"><MessageCircle size={18} className="text-slate-500" /></button>
+                            <button onClick={() => onViewChange('history')} className="p-2.5 hover:bg-white/80 rounded-xl transition-all relative border border-transparent hover:border-white/40">
+                                <Bell size={18} className="text-slate-500" />
+                                <div className="absolute top-2.5 right-2.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-[#E3E9F0]" />
                             </button>
                         </div>
-                        <div className="flex items-center gap-3 bg-white/60 p-1.5 pr-4 rounded-full border border-white/40 shadow-sm cursor-pointer hover:bg-white/90 transition-all group">
-                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=James" className="w-10 h-10 rounded-full border-2 border-white shadow-sm" alt="avatar" />
-                            <span className="text-sm font-bold text-slate-700">James W.</span>
-                            <ChevronDown size={14} className="text-slate-400 group-hover:text-black transition-colors" />
+                        <div className="h-8 w-[1px] bg-slate-200" />
+                        <div className="flex items-center gap-3 bg-white/60 p-1 pr-4 rounded-full border border-white/40 shadow-sm cursor-pointer hover:bg-white/90 transition-all group">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=James" className="w-8 h-8 rounded-full border border-white shadow-sm" alt="avatar" />
+                            <span className="text-[13px] font-bold text-slate-700">James W.</span>
+                            <ChevronDown size={12} className="text-slate-400 group-hover:text-black transition-colors" />
                         </div>
                     </div>
                 </header>
 
                 {/* Dynamic Content */}
-                <main className="flex-1 overflow-y-auto px-12 pb-12 scrollbar-none">
+                <main className="flex-1 overflow-y-auto px-10 pb-10 pt-8 scrollbar-none">
                     {children}
                 </main>
             </div>

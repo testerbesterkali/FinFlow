@@ -3,16 +3,14 @@ import { createChart, ColorType, IChartApi } from 'lightweight-charts'
 import {
     ChevronLeft,
     Activity,
-    Target,
-    AlertTriangle,
-    Info,
     TrendingUp,
-    Zap
+    Zap,
+    Info
 } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface AssetDeepDiveProps {
-    symbol: string
+    symbol?: string
     onBack?: () => void
 }
 
@@ -32,20 +30,21 @@ export default function AssetDeepDive({ symbol = 'AAPL', onBack }: AssetDeepDive
         const chart = createChart(chartContainerRef.current, {
             layout: {
                 background: { type: ColorType.Solid, color: 'transparent' },
-                textColor: '#64748B',
+                textColor: '#94A3B8',
+                fontSize: 12,
             },
             grid: {
-                vertLines: { color: 'rgba(0, 0, 0, 0.05)' },
-                horzLines: { color: 'rgba(0, 0, 0, 0.05)' },
+                vertLines: { color: 'rgba(0, 0, 0, 0.02)' },
+                horzLines: { color: 'rgba(0, 0, 0, 0.02)' },
             },
             width: chartContainerRef.current.clientWidth,
-            height: 400,
+            height: 480,
         })
 
         const lineSeries = chart.addLineSeries({
             color: '#3b82f6',
             lineWidth: 3,
-            priceFormat: { type: 'price', precision: 2, minMove: 0.01 },
+            crosshairMarkerVisible: true,
         })
 
         lineSeries.setData([
@@ -68,126 +67,98 @@ export default function AssetDeepDive({ symbol = 'AAPL', onBack }: AssetDeepDive
     }, [])
 
     return (
-        <div className="min-h-screen bg-[#E3E9F0] text-slate-900 flex flex-col p-8 gap-8 overflow-y-auto page-transition">
-            {/* Navigation */}
-            <button
-                onClick={onBack}
-                className="flex items-center gap-2 text-slate-500 hover:text-black transition-all group w-fit"
-            >
-                <div className="p-2 bg-white rounded-xl shadow-sm border border-white/40 group-hover:scale-110 transition-transform">
-                    <ChevronLeft className="w-5 h-5" />
-                </div>
-                <span className="font-bold text-sm tracking-tight">Return to Intelligence Center</span>
-            </button>
+        <div className="flex flex-col gap-10 page-transition">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
+                <div className="space-y-6">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 text-slate-400 hover:text-black transition-all group font-black text-[10px] uppercase tracking-[0.2em]"
+                    >
+                        <ChevronLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                        Control Center
+                    </button>
 
-            {/* Header Info */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                <div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 bg-black rounded-2xl flex items-center justify-center text-white font-bold text-xl">{symbol[0]}</div>
+                    <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center text-white font-black text-3xl shadow-lg">{symbol[0]}</div>
                         <div>
-                            <h1 className="text-5xl font-extrabold tracking-tighter text-black">{symbol}</h1>
-                            <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Apple Inc. • Technology Sector</p>
+                            <h1 className="text-5xl font-black tracking-tighter text-black leading-none mb-2">{symbol}</h1>
+                            <p className="text-sm text-slate-400 font-bold uppercase tracking-[0.2em]">Institutional Equity Stream • NASDAQ</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                        <span className="text-3xl font-mono font-bold text-slate-900">$185.40</span>
-                        <span className="px-3 py-1 bg-emerald-50 text-emerald-600 font-bold text-sm rounded-xl border border-emerald-100">+1.24% today</span>
-                    </div>
                 </div>
 
-                <div className="flex gap-4">
-                    <div className="premium-card bg-white px-6 py-4 flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">AI Regime</span>
-                        <span className="text-emerald-500 font-bold flex items-center gap-2">
-                            <TrendingUp size={16} /> BULLISH
+                <div className="flex gap-4 pb-2">
+                    <div className="premium-card bg-white px-8 py-5 flex flex-col items-center shadow-lg border border-white/80">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">AI Pulse</span>
+                        <span className="text-emerald-500 font-black text-xl flex items-center gap-2">
+                            <TrendingUp size={20} /> BULLISH
                         </span>
                     </div>
-                    <div className="premium-card bg-white px-6 py-4 flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Volatility</span>
-                        <span className="text-slate-900 font-bold">Low (14.2)</span>
+                    <div className="premium-card bg-white px-8 py-5 flex flex-col items-center shadow-lg border border-white/80">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Vol Regime</span>
+                        <span className="text-slate-900 font-black text-xl">STABLE</span>
                     </div>
                 </div>
             </div>
 
-            {/* Charts & Synthesis */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 flex-1">
-                {/* Chart Column */}
-                <div className="lg:col-span-2 space-y-8">
-                    <div className="premium-card bg-white h-[500px] p-8 flex flex-col gap-6 shadow-xl">
-                        <div className="flex justify-between items-center">
-                            <h3 className="font-bold text-lg flex items-center gap-2"><Activity size={20} className="text-blue-500" /> Executive Price Action</h3>
-                            <div className="flex gap-1 p-1 bg-slate-100 rounded-xl">
-                                {['1H', '1D', '1W', '1M', 'YTD'].map(t => (
-                                    <button key={t} className={cn(
-                                        "px-4 py-1.5 text-[10px] font-bold rounded-lg transition-all",
-                                        t === '1D' ? "bg-white text-black shadow-sm" : "text-slate-500 hover:text-black"
-                                    )}>{t}</button>
-                                ))}
-                            </div>
+            {/* Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                <div className="lg:col-span-2 premium-card bg-white p-10 min-h-[580px] flex flex-col gap-6 shadow-xl border border-white/80">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-black flex items-center gap-3"><Activity size={24} className="text-blue-500" /> Price Action Velocity</h3>
+                        <div className="flex gap-2 p-1 bg-slate-100 rounded-xl">
+                            {['1D', '1W', '1M', 'ALL'].map(t => (
+                                <button key={t} className={cn(
+                                    "px-4 py-1.5 text-[10px] font-black rounded-lg transition-all",
+                                    t === '1D' ? "bg-white text-black shadow-sm" : "text-slate-400 hover:text-black"
+                                )}>{t}</button>
+                            ))}
                         </div>
-                        <div ref={chartContainerRef} className="w-full flex-1" />
+                    </div>
+                    <div className="flex-1 w-full bg-slate-50/30 rounded-2xl p-4 relative">
+                        <div ref={chartContainerRef} className="w-full h-full" />
                     </div>
                 </div>
 
-                {/* Intelligence Column */}
-                <div className="space-y-8">
-                    {/* FICC Insight Card */}
-                    <div className="premium-card bg-black text-white p-10 flex flex-col gap-8 shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 blur-3xl" />
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center"><Zap size={20} className="text-blue-400" /></div>
-                            <h3 className="font-bold text-xl tracking-tight">AI Synthesis</h3>
+                <div className="space-y-10">
+                    <div className="premium-card bg-[#0F172A] text-white p-10 flex flex-col gap-8 shadow-huge relative overflow-hidden group border border-white/5">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 blur-[100px] group-hover:bg-blue-500/20 transition-all duration-1000" />
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-12 h-12 bg-white/5 rounded-xl flex items-center justify-center border border-white/5 shadow-inner"><Zap size={24} className="text-blue-400" /></div>
+                            <h3 className="font-black text-2xl tracking-tight">AI Thesis</h3>
                         </div>
 
-                        <div className="space-y-6">
-                            <div>
-                                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">The Thesis</div>
-                                <p className="text-sm text-slate-300 leading-relaxed italic border-l-2 border-blue-500/50 pl-4 py-1">
-                                    "Accumulation confirmed at $180 support range. Institutional volume nodes suggest a run toward $195 gap-fill."
-                                </p>
-                            </div>
+                        <div className="space-y-6 relative z-10">
+                            <p className="text-base text-slate-300 font-medium leading-relaxed italic border-l-4 border-blue-500/30 pl-6 py-2">
+                                "Institutional liquidity nodes are congregating at $184.20. Order flow imbalance indicates a high-probability breakout."
+                            </p>
 
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Confidence</div>
-                                    <div className="text-2xl font-bold">84%</div>
+                            <div className="grid grid-cols-1 gap-6 bg-white/5 p-8 rounded-2xl border border-white/5">
+                                <div className="flex items-center justify-between">
+                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Confidence</div>
+                                    <div className="text-4xl font-black">94<span className="text-base text-blue-400 ml-0.5">%</span></div>
                                 </div>
-                                <div>
-                                    <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Risk Mode</div>
-                                    <div className="text-2xl font-bold text-emerald-400">Risk-On</div>
+                                <div className="h-[1px] bg-white/5" />
+                                <div className="flex items-center justify-between">
+                                    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Prob</div>
+                                    <div className="text-3xl font-black text-emerald-400 tracking-tighter uppercase">Extreme</div>
                                 </div>
                             </div>
                         </div>
 
-                        <button className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/20 rounded-2xl font-bold text-sm transition-all">
-                            Generate Full Report
+                        <button className="w-full py-5 bg-white text-black font-black text-base rounded-2xl hover:bg-slate-100 transition-all shadow-xl active:scale-95 relative z-10">
+                            Generate Audit
                         </button>
                     </div>
 
-                    {/* Factors / Risk */}
-                    <div className="premium-card bg-white/50 p-8 space-y-6">
-                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2"><Info size={16} className="text-slate-400" /> Key Factors</h4>
-                        <div className="space-y-4">
-                            <FactorItem label="Institutional Inflow" value="High" trend="up" />
-                            <FactorItem label="Option Flow Sentiment" value="Bullish" trend="up" />
-                            <FactorItem label="Sector Correlation" value="Strong" trend="neutral" />
+                    <div className="premium-card bg-white p-8 space-y-6 shadow-xl border border-white/80">
+                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3 mb-1 leading-none"><Info size={18} /> Matrix Factors</h4>
+                        <div className="space-y-5">
+                            <FactorItem label="Inflow Intensity" value="Institutional" status="emerald" />
+                            <FactorItem label="Macro Correlation" value="Negative" status="rose" />
+                            <FactorItem label="Liquidity Depth" value="High" status="blue" />
                         </div>
-                    </div>
-
-                    {/* Risk Framework */}
-                    <div className="premium-card bg-rose-50/50 border border-rose-100 p-8">
-                        <h4 className="text-sm font-bold text-rose-950 flex items-center gap-2 mb-4"><AlertTriangle size={16} className="text-rose-500" /> Risk Anchors</h4>
-                        <ul className="space-y-3">
-                            <li className="text-[11px] text-rose-800 leading-relaxed flex gap-2">
-                                <span className="w-1 h-1 bg-rose-500 rounded-full mt-1.5 shrink-0" />
-                                Major resistance at $192.40 psychological level.
-                            </li>
-                            <li className="text-[11px] text-rose-800 leading-relaxed flex gap-2">
-                                <span className="w-1 h-1 bg-rose-500 rounded-full mt-1.5 shrink-0" />
-                                CPI print on Feb 22 may invalidate current regime.
-                            </li>
-                        </ul>
                     </div>
                 </div>
             </div>
@@ -195,14 +166,18 @@ export default function AssetDeepDive({ symbol = 'AAPL', onBack }: AssetDeepDive
     )
 }
 
-function FactorItem({ label, value, trend }) {
+function FactorItem({ label, value, status }: { label: string, value: string, status: 'emerald' | 'rose' | 'blue' }) {
+    const colors = {
+        emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
+        rose: "bg-rose-50 text-rose-600 border-rose-100",
+        blue: "bg-blue-50 text-blue-600 border-blue-100"
+    }
     return (
-        <div className="flex items-center justify-between">
-            <span className="text-xs text-slate-500 font-medium">{label}</span>
+        <div className="flex items-center justify-between group cursor-pointer hover:bg-slate-50 p-2.5 rounded-xl transition-all border border-transparent hover:border-slate-100">
+            <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-tight">{label}</span>
             <span className={cn(
-                "text-xs font-bold px-2 py-1 rounded-lg",
-                trend === 'up' ? "bg-emerald-50 text-emerald-600" :
-                    trend === 'down' ? "bg-rose-50 text-rose-600" : "bg-slate-100 text-slate-600"
+                "text-[9px] font-black px-4 py-1 rounded-lg border shadow-sm transition-all group-hover:scale-105",
+                colors[status] || "bg-slate-50 text-slate-600 border-slate-100"
             )}>{value}</span>
         </div>
     )

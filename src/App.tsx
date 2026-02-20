@@ -1,54 +1,52 @@
 import React, { useState } from 'react'
-import Onboarding from './screens/Onboarding'
 import Dashboard from './screens/Dashboard'
+import Onboarding from './screens/Onboarding'
 import AssetDeepDive from './screens/AssetDeepDive'
 import AgentBuilder from './screens/AgentBuilder'
 import OpportunityDetail from './screens/OpportunityDetail'
 import AlertHistory from './screens/AlertHistory'
 import MainLayout from './components/MainLayout'
 
-function App() {
-    const [view, setView] = useState('onboarding') // onboarding | dashboard | deepdive | agentbuilder | radar | history
-    const [selectedAsset, setSelectedAsset] = useState('AAPL')
+export default function App() {
+    const [view, setView] = useState('onboarding')
+
+    const handleCompleteOnboarding = () => {
+        setView('dashboard')
+    }
+
+    // Define content based on view
+    const renderViewContent = () => {
+        switch (view) {
+            case 'dashboard':
+                return <Dashboard
+                    onOpenAsset={(id) => setView('deepdive')}
+                    onOpenOpportunity={(id) => setView('opportunity')}
+                    onOpenHistory={() => setView('history')}
+                />
+            case 'deepdive':
+                return <AssetDeepDive />
+            case 'agentbuilder':
+                return <AgentBuilder />
+            case 'opportunity':
+                return <OpportunityDetail />
+            case 'history':
+                return <AlertHistory />
+            default:
+                return <Dashboard
+                    onOpenAsset={(id) => setView('deepdive')}
+                    onOpenOpportunity={(id) => setView('opportunity')}
+                    onOpenHistory={() => setView('history')}
+                />
+        }
+    }
 
     if (view === 'onboarding') {
-        return <Onboarding onComplete={() => setView('dashboard')} />
+        return <Onboarding onComplete={handleCompleteOnboarding} />
     }
 
     return (
         <MainLayout activeView={view} onViewChange={setView}>
-            {view === 'dashboard' && (
-                <Dashboard
-                    onSelectAsset={(symbol: string) => {
-                        setSelectedAsset(symbol)
-                        setView('deepdive')
-                    }}
-                    onOpenAgents={() => setView('agentbuilder')}
-                    onOpenRadar={() => setView('radar')}
-                    onOpenHistory={() => setView('history')}
-                />
-            )}
-
-            {view === 'deepdive' && (
-                <AssetDeepDive
-                    symbol={selectedAsset}
-                    onBack={() => setView('dashboard')}
-                />
-            )}
-
-            {view === 'agentbuilder' && (
-                <AgentBuilder onBack={() => setView('dashboard')} />
-            )}
-
-            {view === 'radar' && (
-                <OpportunityDetail onBack={() => setView('dashboard')} />
-            )}
-
-            {view === 'history' && (
-                <AlertHistory onBack={() => setView('dashboard')} />
-            )}
+            {renderViewContent()}
         </MainLayout>
     )
 }
-
-export default App
