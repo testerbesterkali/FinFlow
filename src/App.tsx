@@ -1,12 +1,51 @@
+import React, { useState } from 'react'
+import Onboarding from './screens/Onboarding'
+import Dashboard from './screens/Dashboard'
+import AssetDeepDive from './screens/AssetDeepDive'
+import AgentBuilder from './screens/AgentBuilder'
+import OpportunityDetail from './screens/OpportunityDetail'
+import AlertHistory from './screens/AlertHistory'
+
 function App() {
+    const [view, setView] = useState('onboarding') // onboarding | dashboard | deepdive | agentbuilder | radar | history
+    const [selectedAsset, setSelectedAsset] = useState('AAPL')
+
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
-            <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                FinFlow AI
-            </h1>
-            <p className="text-slate-400 max-w-md text-center">
-                Your AI-powered financial intelligence platform. Initializing core systems...
-            </p>
+        <div className="min-h-screen bg-slate-950">
+            {view === 'onboarding' && (
+                <Onboarding onComplete={() => setView('dashboard')} />
+            )}
+
+            {view === 'dashboard' && (
+                <Dashboard
+                    onSelectAsset={(symbol: string) => {
+                        setSelectedAsset(symbol)
+                        setView('deepdive')
+                    }}
+                    onOpenAgents={() => setView('agentbuilder')}
+                    onOpenRadar={() => setView('radar')}
+                    onOpenHistory={() => setView('history')}
+                />
+            )}
+
+            {view === 'deepdive' && (
+                <AssetDeepDive
+                    symbol={selectedAsset}
+                    onBack={() => setView('dashboard')}
+                />
+            )}
+
+            {view === 'agentbuilder' && (
+                <AgentBuilder onBack={() => setView('dashboard')} />
+            )}
+
+            {view === 'radar' && (
+                <OpportunityDetail onBack={() => setView('dashboard')} />
+            )}
+
+            {view === 'history' && (
+                <AlertHistory onBack={() => setView('dashboard')} />
+            )}
         </div>
     )
 }
