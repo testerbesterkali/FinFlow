@@ -1,0 +1,8 @@
+{
+    "imports": {
+        "https://deno.land/std@0.168.0/": "https://deno.land/std@0.168.0/",
+        "https://esm.sh/": "https://esm.sh/",
+        "telegraf": "https://esm.sh/telegraf@4.11.2",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.7.1"
+    }
+}
