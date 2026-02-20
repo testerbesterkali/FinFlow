@@ -1,11 +1,11 @@
 import React, { useState } from 'react'
 import { cn } from '../lib/utils'
-import { Rocket, Shield, Zap, Bot, CheckCircle2 } from 'lucide-react'
+import { Rocket, Shield, Bot, CheckCircle2, ChevronRight, Zap } from 'lucide-react'
 
 const steps = [
-    { id: 1, title: 'Welcome' },
-    { id: 2, title: 'Telegram' },
-    { id: 3, title: 'Finished' }
+    { id: 1, title: 'Experience' },
+    { id: 2, title: 'Connectivity' },
+    { id: 3, title: 'Activation' }
 ]
 
 interface OnboardingProps {
@@ -24,75 +24,107 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 pb-24">
-            {/* Progress Bar */}
-            <div className="flex gap-2 mb-12">
-                {steps.map(step => (
-                    <div
-                        key={step.id}
-                        className={cn(
-                            "h-1 w-12 rounded-full transition-all duration-300",
-                            currentStep >= step.id ? "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.6)]" : "bg-slate-800"
-                        )}
-                    />
-                ))}
-            </div>
+        <div className="min-h-screen bg-[#E3E9F0] text-slate-900 flex flex-col items-center justify-center p-8 overflow-hidden relative">
+            {/* Abstract Background Elements */}
+            <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-500/10 blur-[120px] rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 blur-[100px] rounded-full translate-y-1/2 -translate-x-1/2" />
 
-            <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-4 duration-700">
-                {currentStep === 1 && (
-                    <div className="text-center">
-                        <div className="w-20 h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-blue-500/20">
-                            <Rocket className="text-blue-400 w-10 h-10" />
+            {/* Main Container */}
+            <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center page-transition">
+
+                {/* Left Side: Branding & Info */}
+                <div className="space-y-8">
+                    <div className="flex items-center gap-3 text-2xl font-black text-black tracking-tighter italic">
+                        <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center text-white rotate-3">
+                            <Zap size={20} />
                         </div>
-                        <h1 className="text-4xl font-bold mb-4">FinFlow AI</h1>
-                        <p className="text-slate-400 mb-8 leading-relaxed">
-                            Institutional-grade market intelligence delivered directly to your Telegram.
-                        </p>
-                        <button
-                            onClick={nextStep}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-600/20"
-                        >
-                            Get Started Free
-                        </button>
+                        finflow
                     </div>
-                )}
 
-                {currentStep === 2 && (
-                    <div className="text-center">
-                        <div className="w-20 h-20 bg-sky-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-sky-500/20">
-                            <Shield className="text-sky-400 w-10 h-10" />
-                        </div>
-                        <h2 className="text-3xl font-bold mb-4">Connect Telegram</h2>
-                        <div className="bg-slate-900/50 p-6 rounded-2xl mb-8 border border-white/5">
+                    <h1 className="text-5xl lg:text-7xl font-bold tracking-tight text-slate-950 leading-[0.9]">
+                        Institutional <br />
+                        <span className="text-blue-600 italic">intelligence</span> <br />
+                        for all.
+                    </h1>
+
+                    <p className="text-lg text-slate-500 leading-relaxed max-w-sm">
+                        Autonomous market monitoring. AI-powered FICC analysis. Direct to your Telegram, 24/7.
+                    </p>
+
+                    <div className="flex gap-4 items-center pt-8">
+                        {steps.map(s => (
+                            <div key={s.id} className={cn(
+                                "h-1.5 transition-all duration-500 rounded-full",
+                                currentStep === s.id ? "w-12 bg-black" : "w-6 bg-slate-300"
+                            )} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right Side: Interactive Card */}
+                <div className="premium-card bg-white p-12 shadow-2xl relative overflow-hidden flex flex-col items-center text-center">
+                    {currentStep === 1 && (
+                        <div className="animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-blue-100">
+                                <Rocket className="text-blue-600 w-10 h-10" />
+                            </div>
+                            <h2 className="text-3xl font-bold mb-4">Welcome to Alpha</h2>
+                            <p className="text-slate-500 mb-10 leading-relaxed">
+                                FinFlow agents monitor global markets while you sleep. Set triggers, get results.
+                            </p>
                             <button
                                 onClick={nextStep}
-                                className="w-full bg-[#229ED9] hover:bg-[#28b3f7] text-white font-bold py-4 rounded-xl flex items-center justify-center gap-3"
+                                className="w-full bg-black text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 group transition-all hover:pr-4"
                             >
-                                Link to @FinFlowAIBot
+                                Continue <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {currentStep === 3 && (
-                    <div className="text-center">
-                        <CheckCircle2 className="w-16 h-16 text-emerald-500 mx-auto mb-6" />
-                        <h2 className="text-2xl font-bold mb-2">Ready to Go!</h2>
-                        <button
-                            onClick={onComplete}
-                            className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl transition-all"
-                        >
-                            Go to Dashboard
-                        </button>
-                    </div>
-                )}
+                    {currentStep === 2 && (
+                        <div className="animate-in fade-in slide-in-from-right-8 duration-500">
+                            <div className="w-24 h-24 bg-sky-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 border border-sky-100">
+                                <Shield className="text-sky-600 w-10 h-10" />
+                            </div>
+                            <h2 className="text-3xl font-bold mb-4">Native Telegram</h2>
+                            <p className="text-slate-500 mb-10 leading-relaxed">
+                                No new apps to install. Our intelligence stream sits right in your chat.
+                            </p>
+                            <button
+                                onClick={nextStep}
+                                className="w-full bg-[#229ED9] text-white font-bold py-5 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all"
+                            >
+                                Setup @FinFlowAIBot
+                            </button>
+                        </div>
+                    )}
+
+                    {currentStep === 3 && (
+                        <div className="animate-in fade-in slide-in-from-right-8 duration-300 text-center">
+                            <div className="relative mb-8">
+                                <CheckCircle2 className="w-24 h-24 text-emerald-500 mx-auto" />
+                                <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full" />
+                            </div>
+                            <h2 className="text-3xl font-bold mb-4">Ready for Launch</h2>
+                            <p className="text-slate-500 mb-10 leading-relaxed">
+                                Your personalized market stream is ready. Enter the command center.
+                            </p>
+                            <button
+                                onClick={onComplete}
+                                className="w-full bg-black text-white font-bold py-5 rounded-2xl transition-all shadow-xl shadow-black/10 active:scale-95 translate-y-0 hover:-translate-y-1"
+                            >
+                                Enter Dashboard
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Footer Disclaimer */}
-            <footer className="fixed bottom-0 left-0 right-0 p-6 bg-slate-950/80 backdrop-blur-md border-t border-white/5">
-                <p className="max-w-2xl mx-auto text-[10px] text-slate-600 text-center leading-tight">
-                    ⚖️ FinFlow AI provides financial information for educational purposes only.
-                </p>
+            {/* Simple Footer */}
+            <footer className="fixed bottom-12 flex gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                <span>Term of Use</span>
+                <span>Privacy Policy</span>
+                <span>FinFlow AI © 2026</span>
             </footer>
         </div>
     )

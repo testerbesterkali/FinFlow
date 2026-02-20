@@ -5,17 +5,18 @@ import AssetDeepDive from './screens/AssetDeepDive'
 import AgentBuilder from './screens/AgentBuilder'
 import OpportunityDetail from './screens/OpportunityDetail'
 import AlertHistory from './screens/AlertHistory'
+import MainLayout from './components/MainLayout'
 
 function App() {
     const [view, setView] = useState('onboarding') // onboarding | dashboard | deepdive | agentbuilder | radar | history
     const [selectedAsset, setSelectedAsset] = useState('AAPL')
 
-    return (
-        <div className="min-h-screen bg-slate-950">
-            {view === 'onboarding' && (
-                <Onboarding onComplete={() => setView('dashboard')} />
-            )}
+    if (view === 'onboarding') {
+        return <Onboarding onComplete={() => setView('dashboard')} />
+    }
 
+    return (
+        <MainLayout activeView={view} onViewChange={setView}>
             {view === 'dashboard' && (
                 <Dashboard
                     onSelectAsset={(symbol: string) => {
@@ -46,7 +47,7 @@ function App() {
             {view === 'history' && (
                 <AlertHistory onBack={() => setView('dashboard')} />
             )}
-        </div>
+        </MainLayout>
     )
 }
 
